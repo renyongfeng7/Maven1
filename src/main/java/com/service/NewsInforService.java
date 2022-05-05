@@ -1,0 +1,23 @@
+package com.service;
+
+import com.bean.NewsInfor;
+
+import java.util.List;
+
+public interface NewsInforService {
+
+    /*查询所有*/
+    public List<NewsInfor> selectAll();
+    /*分页查询*/
+    public List<NewsInfor> selectByPage(int pageNo, int pageSize);
+    /*添加*/
+    public int insert(NewsInfor newsInfor);
+    /*根据id删除*/
+    public int deleteById(Integer id);
+    /*根据id查询*/
+    public NewsInfor selectById(Integer id);
+    /*总条数*/
+    public int count();
+    /*根据id更新*/
+    public int updateById(NewsInfor newsInfor);
+}

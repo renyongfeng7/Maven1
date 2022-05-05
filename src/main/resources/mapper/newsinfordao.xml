@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dao.NewsInforDao">
+    <resultMap id="NewsInforMap" type="NewsInfor">
+        <id property="newsId" column="newsId"></id>
+        <result property="newsTitle" column="newsTitle"></result>
+        <result property="newsImg" column="newsImg"></result>
+        <result property="newsContent" column="newsContent"></result>
+        <result property="sendTime" column="sendTime"></result>
+        <association property="newsType" column="com.bean.NewsType">
+            <id property="typeId" column="typeId"></id>
+            <result property="typeName" column="typeName"></result>
+        </association>
+        <association property="sendUser" column="com.bean.User">
+            <id property="userId" column="userId"></id>
+            <result property="realName" column="realName"></result>
+        </association>
+    </resultMap>
+    <!--根据id查询-->
+    <select id="selectById" resultMap="NewsInforMap">
+        SELECT * FROM tbl_newsinfor tn
+        INNER JOIN  tbl_newstype tp ON tn.newsType = tp.typeId
+        INNER JOIN tbl_user tu ON tn.sendUser = tu.userId
+        WHERE newsId = #{id}
+    </select>
+
+    <select id="selectAll" resultType="NewsInfor">
+        select * from tbl_newsinfor
+    </select>
+    <!--添加-->
+    <insert id="insert">
+        insert into tbl_newsinfor (newsTitle,newsType,newsImg,newsContent,sendUser,sendTime)
+        values(#{newsTitle},#{newsType.typeId},#{newsImg},#{newsContent},#{sendUser.userId},#{sendTime})
+    </insert>
+    <!--根据id删除-->
+    <delete id="deleteById">
+        delete from tbl_newsinfor where newsId =#{id}
+    </delete>
+    <!--根据id编辑更新-->
+    <update id="updateById">
+        update tbl_newsinfor
+        <trim prefix="set" suffixOverrides=",">
+            <if test="null!=newsTitle">newsTitle = #{newsTitle},</if>
+            <if test="null!=newsType">newsType = #{newsType.typeId},</if>
+            <if test="null!=newsImg">newsImg = #{newsImg},</if>
+            <if test="null!=newsContent">newsContent =  #{newsContent},</if>
+            <if test="null!=sendUser">sendUser  =#{sendUser.userId},</if>
+            <if test="null!=sendTime">sendTime = #{sendTime},</if>
+        </trim>
+        where newsId = #{newsId}
+    </update>
+    <!--动态分页查询-->
+    <select id="selectByPage" resultMap="NewsInforMap" >
+        select * from tbl_newsinfor tn
+        INNER JOIN  tbl_newstype tp ON tn.newsType = tp.typeId
+        INNER JOIN tbl_user tu ON tn.sendUser = tu.userId
+        ORDER BY newsId  DESC
+        limit #{pageNo},#{pageSize}
+    </select>
+    <!--批量添加-->
+    <insert id="insertList">
+        insert into tbl_newsinfor (newsTitle,newsType,newsImg,newsContent,sendUser,sendTime)
+        values
+        <foreach collection="insertlist" separator="," item="obj" >
+            (#{obj.newsTitle},#{obj.newsType.newsId},#{obj.newsImg},#{obj.newsContent},#{obj.sendUser.userId},#{obj.sendTime})
+        </foreach>
+    </insert>
+
+    <!--批量删除-->
+    <sql id="delete" >
+        delete from tbl_newsinfor where newsId in
+    </sql>
+    <delete id="deleteList">
+        <include refid="delete"></include>
+        <foreach collection="deleteList" item="deleteList" separator="," open="(" close=")">
+            #{deleteList}
+        </foreach>
+    </delete>
+
+    <!--查询总条数-->
+    <select id="count" resultType="java.lang.Integer">
+        SELECT COUNT(*) num FROM tbl_newsinfor
+    </select>
+</mapper>

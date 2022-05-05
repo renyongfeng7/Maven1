@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--映射文件与dao接口一一对应；
+    namespace与接口对应；
+    id与接口的方法名对应；
+    resultType与查询结果中的每一行对应；
+-->
+<mapper namespace="com.dao.NewsTypeDao">
+    <!--查询所有-->
+    <select id="selectAll" resultType="NewsType">
+        select * from tbl_newstype
+    </select>
+   <select id="selectByPage" resultType="NewsType">
+        select * from tbl_newstype limit #{page},#{pageSize}
+    </select>
+    <delete id="deleteById" parameterType="NewsType">
+        delete from tbl_newstype where typeId = #{id}
+    </delete>
+    <insert id="insert">
+        insert into tbl_newstype (typeName) values (#{typeName})
+    </insert>
+
+</mapper>

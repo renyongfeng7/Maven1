@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--映射文件与dao接口一一对应；
+    namespace与接口对应；
+    id与接口的方法名对应；
+    resultType与查询结果中的每一行对应；
+-->
+<mapper namespace="com.dao.UserDao">
+<!--可查询用户角色-->
+    <resultMap id="userr" type="User">
+        <id property="userId" column="userId"></id>
+        <result property="realName" column="realName"></result>
+        <result property="userName" column="userName"></result>
+        <result property="userPwd" column="userPwd"></result>
+        <association property="role" column="com.bean.Role">
+            <id property="roleId" column="role_id"></id>
+            <result property="roleName" column="role_name"></result>
+        </association>
+    </resultMap>
+    <select id="selectAll" resultType="User">
+        select * from tbl_user
+    </select>
+    <select id="login" resultMap="userr">
+        select * from tbl_user tu
+        inner join tbl_role tr on tu.userRole = tr.role_id
+        where userName = #{userName} and userPwd = #{userPwd}
+    </select>
+    <select id="selectById" resultType="User">
+        select * from tbl_user where userId = #{id}
+    </select>
+    <select id="selectByPage" resultType="User">
+        select * from tbl_user limit #{page},#{pageSize}
+    </select>
+    <delete id="deleteById" parameterType="User">
+        delete from tbl_user where userId = #{id}
+    </delete>
+
+    <insert id="save" >
+        insert into tbl_user (realName,userName,userPwd) values (#{realName},#{userName},#{userPwd})
+    </insert>
+    <update id="update">
+        update tbl_user
+        set realName = #{realName},userName= #{userName},userPwd=#{userPwd}
+        where userId = #{userId}
+    </update>
+
+    <!--************通过角色role查询权限root******************-->
+   <resultMap id="root" type="Root" >
+       <id property="rootId" column="root_id"></id>
+       <association property="role" column="com.bean.Role">
+           <id property="roleId" column="role_id"></id>
+           <result property="roleName" column="role_name"></result>
+       </association>
+       <association property="function" column="com.bean.Function">
+           <id property="funId" column="fun_id"></id>
+           <result property="funName" column="fun_name"></result>
+           <result property="funUrl" column="fun_url"></result>
+           <result property="funParent" column="fun_parent"></result>
+       </association>
+   </resultMap>
+<!--通过角色查权限-->
+    <select id="selectByRole" resultMap="root">
+        select * from tbl_root tr
+        inner join tbl_role trole on trole.role_id = tr.role
+        inner join tbl_function tf on tf.fun_id = tr.function
+        where role = #{role}
+    </select>
+    <!--******************************-->
+
+</mapper>

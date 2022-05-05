@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd">
+    
+    <context:property-placeholder location="classpath:property.properties"></context:property-placeholder>
+    <!--第三方数据源：datasource ，c3p0 , CBCP ,DRUID 下载jar包-->
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+        <!-- 基本属性 url、user、password -->
+        <property name="url" value="${jdbc.url}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+        <!-- 配置监控统计拦截的filters -->
+        <property name="filters" value="stat"/>
+        <!-- 配置初始化大小、最小、最大 -->
+        <property name="maxActive" value="20"/>
+        <property name="initialSize" value="1"/>
+        <property name="minIdle" value="1"/>
+        <!-- 配置获取连接等待超时的时间 -->
+        <property name="maxWait" value="60000"/>
+        <!-- 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒 -->
+        <property name="timeBetweenEvictionRunsMillis" value="60000"/>
+        <!-- 配置一个连接在池中最小生存的时间，单位是毫秒 -->
+        <property name="minEvictableIdleTimeMillis" value="300000"/>
+        <property name="testWhileIdle" value="true"/>
+        <property name="testOnBorrow" value="false"/>
+        <property name="testOnReturn" value="false"/>
+        <!-- 打开PSCache，并且指定每个连接上PSCache的大小 -->
+        <property name="poolPreparedStatements" value="true"/>
+        <property name="maxOpenPreparedStatements" value="20"/>
+    </bean>
+
+<!--spring创建SessionFactory-->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <!--注入数据源-->
+        <property name="dataSource" ref="dataSource"></property>
+        <!--加载映射文件-->
+        <property name="mapperLocations" value="classpath:mapper/*.xml"></property>
+        <!--别名-->
+        <property name="typeAliasesPackage" value="com.bean"></property>
+        <!--还是读取setting-->
+       <!--<property name="configLocation" value="classpath:mybatis-config.xml"></property>-->
+
+    </bean>
+
+<!--创建sqlSessionTemplate-->
+    <!--<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
+        <constructor-arg name="sqlSessionFactory" ref="sqlSessionFactory"></constructor-arg>
+    </bean>-->
+<!--创建dao层对象注入sqlsession-->
+    <!--<bean id="userDao " class="com.dao.impl.UserDaoImpl">
+        <property name="sqlSessionFactory" ref="sqlSessionFactory"></property>
+    </bean>-->
+    <!--让spring创建实现类-->
+    <!--<bean id="userDao" class="org.mybatis.spring.mapper.MapperFactoryBean">
+        <property name="sqlSessionFactory" ref="sqlSessionFactory"></property>
+        <property name="mapperInterface" value="com.dao.UserDao"></property>
+    </bean>-->
+<!--spring扫描dao下的所有的dao接口，并创建一个实现类-->
+    <!--默认创建的bean的id为接口名首字母小写-->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"></property>
+        <property name="basePackage" value="com.dao"></property>
+
+    </bean>
+<!--创建service-->
+   <!--<bean id="userService" class="com.service.impl.UserServiceImpl">
+        <property name="" ref="userDao"></property>
+   </bean>-->
+
+<!--声明式事务注意：
+    1.切入点要配置service层
+    2.tx:advice标签中的tx:method标签中的方法名要与事务管理的方法名匹配
+    3.在service实现类中不要对数据库操作的代码进行异常处理。如果要进行异常处理，一定要throw异常对象
+-->
+    <!--事务管理器 开启、关闭-->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"></property>
+    </bean>
+
+    <!--注解进行声明式事务-->
+    <tx:annotation-driven transaction-manager="transactionManager"></tx:annotation-driven>
+    <!--事务增强/增强处理类-->
+    <!--<tx:advice id="txAdvice" transaction-manager="transactionManager">
+        <tx:attributes>
+            &lt;!&ndash;需要增强的方法的名字（切入点）&ndash;&gt;
+            &lt;!&ndash;注意：编码的规范性&ndash;&gt;
+            &lt;!&ndash;propagation:事务传播机制(REQUIRED:必需的)&ndash;&gt;
+            &lt;!&ndash;isolation事务隔离等级&ndash;&gt;
+            &lt;!&ndash;timeout：超时时间(10s)&ndash;&gt;
+            &lt;!&ndash;read-only:事务是否是只读，通常用于查询&ndash;&gt;
+            &lt;!&ndash;rollback-for:产生什么类型的异常的时候需要回滚&ndash;&gt;
+            &lt;!&ndash;no-rollback-for:产生什么类型的异常的时候不需要回滚&ndash;&gt;
+            <tx:method name="save*" propagation="REQUIRED" timeout="2"/>
+            <tx:method name="update*"/>
+            <tx:method name="delete*"/>
+            <tx:method name="query*"/>
+        </tx:attributes>
+    </tx:advice>
+    <aop:config>
+        &lt;!&ndash;切入点&ndash;&gt;
+        <aop:pointcut id="txPointcut" expression="execution(public * com.service..*.*(..))"/>
+        <aop:advisor advice-ref="txAdvice" pointcut-ref="txPointcut"></aop:advisor>
+    </aop:config>-->
+    <context:component-scan base-package="com.service"></context:component-scan>
+</beans>
